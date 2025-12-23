@@ -15,6 +15,9 @@ app.get('/', (req, res) => {
   res.send('Hello, World!');
 });
 
+app.use(defaultNotFoundHandler);
+app.use(errorHandler);
+
 //서버 시작
 app.listen(PORT, () => {
   console.log(`team5 Server is running on port ${PORT}`);
