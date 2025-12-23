@@ -44,5 +44,8 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
     "superstruct": "^1.0.3"
+  },
+  "prisma": {
+    "seed": "ts-node src/lib/seed.ts"
   }
 }
