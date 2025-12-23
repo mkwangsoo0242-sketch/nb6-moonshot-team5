@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { UnauthorizedError } from '../utils/errors';
 
 export interface AuthRequest extends Request {
+  [x: string]: UpdateSubtaskInput;
   userId?: number;
 }
 
