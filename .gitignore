@@ -1,3 +1,4 @@
+
 # Dependencies
 node_modules/
 
@@ -30,3 +31,9 @@ uploads/*
 # Prisma
 prisma/*.db
 prisma/*.db-journal
+=======
+node_modules/
+.env
+dist/
+
+>>>>>>> 49323415b194274ed9189d0bcec2c4c37be0c1a9
