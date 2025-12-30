@@ -15,45 +15,71 @@ datasource db {
 
 model User {
   id           Int     @id @default(autoincrement())
-  email        String
+  email        String  @unique
   name         String
   password     String?
   profileImage String?
 
-  provider   String?
-  providerId String? @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projectMembers ProjectMember[]
+  tasks          Task[]
+  comments       Comment[]
+  userOauths     UserOauth[]
+  userTokens     UserToken[]
+}
+
+model UserOauth {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  provider     String
+  providerId   String
+  accessToken  String
+  refreshToken String
+  tokenExpiry  DateTime
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([provider, providerId])
+}
+
+model UserToken {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  expiresAt DateTime //accessToken 만료시각: 언제까지 유효한가 -> api 요청 시 현재 시간 > expiredAt -> 토큰 만료
+  revokedAt DateTime? //토큰이 무효화된 시각
+
+  accessToken  String
+  refreshToken String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Project {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  projects       Project[]
   projectMembers ProjectMember[]
   tasks          Task[]
-  comments       Comment[]
-}
-
-model Project {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String?
-  ownerId     Int
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  user User @relation(fields: [ownerId], references: [id])
-
-  projectMembers ProjectMember[]
-  tasks          Task[]
+  invitations    Invitation[]
 }
 
 model ProjectMember {
-  id        Int      @id @default(autoincrement())
+  id        Int        @id @default(autoincrement())
   projectId Int
   userId    Int
-  createdAt DateTime @default(now())
+  role      MemberRole @default(MEMBER)
+  createdAt DateTime   @default(now())
 
-  project Project @relation(fields: [projectId], references: [id])
-  user    User    @relation(fields: [userId], references: [id])
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
 }
 
 model Invitation {
@@ -64,30 +90,35 @@ model Invitation {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, invitedEmail])
 }
 
 model Task {
-  id         Int        @id @default(autoincrement())
-  title      String
-  projectId  Int
-  startYear  Int
-  startMonth Int
-  startDay   Int
-  endYear    Int
-  endMonth   Int
-  endDay     Int
-  status     TaskStatus
-  assigneeId Int?
+  id          Int        @id @default(autoincrement())
+  title       String
+  description String?
+  projectId   Int
+  startYear   Int
+  startMonth  Int
+  startDay    Int
+  endYear     Int
+  endMonth    Int
+  endDay      Int
+  status      TaskStatus @default(TODO)
+  assigneeId  Int?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  project Project @relation(fields: [projectId], references: [id])
-  user    User?   @relation(fields: [assigneeId], references: [id])
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
 
   subTasks    SubTask[]
   comments    Comment[]
-  attachments Attachment[]
+  attachments TaskAttachment[]
   taskTags    TaskTag[]
 }
 
@@ -95,12 +126,12 @@ model SubTask {
   id     Int        @id @default(autoincrement())
   title  String
   taskId Int
-  status TaskStatus
+  status TaskStatus @default(TODO)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  task Task @relation(fields: [taskId], references: [id])
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }
 
 model Comment {
@@ -112,13 +143,14 @@ model Comment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  task Task @relation(fields: [taskId], references: [id])
-  user User @relation(fields: [authorId], references: [id])
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [authorId], references: [id], onDelete: Cascade)
 }
 
 model Tag {
-  id       Int       @id @default(autoincrement())
-  name     String
+  id   Int    @id @default(autoincrement())
+  name String
+
   taskTags TaskTag[]
 }
 
@@ -126,18 +158,18 @@ model TaskTag {
   taskId Int
   tagId  Int
 
-  task Task @relation(fields: [taskId], references: [id])
-  tag  Tag  @relation(fields: [tagId], references: [id])
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([taskId, tagId])
 }
 
-model Attachment {
+model TaskAttachment {
   id     Int    @id @default(autoincrement())
   url    String
   taskId Int
 
-  task Task @relation(fields: [taskId], references: [id])
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
 }
 
 enum TaskStatus {
@@ -150,4 +182,9 @@ enum InvitationStatus {
   PENDING //초대보냄
   ACCEPTED //수락
   REJECTED //거절
+}
+
+enum MemberRole {
+  MEMBER //프로젝트 멤버
+  OWNER //프로젝트 오너(소유자, 팀장)
 }

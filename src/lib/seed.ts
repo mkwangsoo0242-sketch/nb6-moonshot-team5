@@ -48,7 +48,6 @@ async function main() {
     data: {
       name: 'Moonshot Project',
       description: '팀 프로젝트 관리 툴',
-      ownerId: user1.id,
     },
   });
 
@@ -56,7 +55,6 @@ async function main() {
     data: {
       name: '초대형 프로젝트',
       description: '초대형 프로젝트 너무 큽니다. 주의하세요',
-      ownerId: user3.id,
     },
   });
 
@@ -64,32 +62,55 @@ async function main() {
     data: {
       name: 'Dear CarMate',
       description: '중고차 거래 사이트',
-      ownerId: user4.id,
+    },
+  });
+
+  //프로젝트 오너 생성
+  await prisma.projectMember.create({
+    data: {
+      projectId: project.id,
+      userId: user1.id,
+      role: 'OWNER',
+    },
+  });
+
+  await prisma.projectMember.create({
+    data: {
+      projectId: project2.id,
+      userId: user3.id,
+      role: 'OWNER',
+    },
+  });
+
+  await prisma.projectMember.create({
+    data: {
+      projectId: project3.id,
+      userId: user4.id,
+      role: 'OWNER',
     },
   });
 
   //멤버 생성(프로젝트 오너 포함)
   await prisma.projectMember.createMany({
     data: [
-      { projectId: project.id, userId: user1.id },
-      { projectId: project.id, userId: user2.id },
+      { projectId: project.id, userId: user3.id, role: 'MEMBER' },
+      { projectId: project.id, userId: user2.id, role: 'MEMBER' },
     ],
   });
 
   await prisma.projectMember.createMany({
     data: [
-      { projectId: project2.id, userId: user3.id },
-      { projectId: project2.id, userId: user2.id },
-      { projectId: project2.id, userId: user1.id },
-      { projectId: project2.id, userId: user4.id },
+      { projectId: project2.id, userId: user2.id, role: 'MEMBER' },
+      { projectId: project2.id, userId: user1.id, role: 'MEMBER' },
+      { projectId: project2.id, userId: user4.id, role: 'MEMBER' },
     ],
   });
 
   await prisma.projectMember.createMany({
     data: [
-      { projectId: project3.id, userId: user4.id },
-      { projectId: project3.id, userId: user5.id },
-      { projectId: project3.id, userId: user1.id },
+      { projectId: project3.id, userId: user2.id, role: 'MEMBER' },
+      { projectId: project3.id, userId: user5.id, role: 'MEMBER' },
+      { projectId: project3.id, userId: user1.id, role: 'MEMBER' },
     ],
   });
 
@@ -112,6 +133,7 @@ async function main() {
   const task2 = await prisma.task.create({
     data: {
       title: '팀 미팅',
+      description: '프로젝트 관련 첫 번째 팀 미팅',
       projectId: project2.id,
       startYear: 2026,
       startMonth: 1,
