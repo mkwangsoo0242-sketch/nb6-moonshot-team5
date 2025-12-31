@@ -45,8 +45,10 @@ model UserOauth {
 }
 
 model UserToken {
-  id        Int       @id @default(autoincrement())
-  userId    Int
+  id     Int @id @default(autoincrement())
+  userId Int
+
+  createdAt DateTime  @default(now())
   expiresAt DateTime //accessToken 만료시각: 언제까지 유효한가 -> api 요청 시 현재 시간 > expiredAt -> 토큰 만료
   revokedAt DateTime? //토큰이 무효화된 시각
 
